@@ -1,5 +1,6 @@
 Flask
 gunicorn
+waitress
 opencv-python-headless
 mediapipe
 joblib
