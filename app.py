@@ -36,7 +36,7 @@ else:
     model = None
 
 # Initialize MediaPipe Hands detectors on startup
-mp_hands = mp.solutions.hands
+import mediapipe.python.solutions.hands as mp_hands
 hands_detector_default = mp_hands.Hands(
     static_image_mode=True,
     max_num_hands=1,

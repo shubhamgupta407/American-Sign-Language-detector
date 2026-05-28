@@ -2,8 +2,8 @@ Flask
 gunicorn
 waitress
 opencv-python-headless
-mediapipe
-joblib
+mediapipe==0.10.21
+joblib==1.5.3
 Pillow
-scikit-learn
-numpy<2
+scikit-learn==1.7.2
+numpy==1.26.4
