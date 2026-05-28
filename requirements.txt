@@ -6,3 +6,4 @@ mediapipe
 joblib
 Pillow
 scikit-learn
+numpy<2
