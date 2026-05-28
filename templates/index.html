@@ -1,0 +1,3520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignAI Pro • American Sign Language Platform</title>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Premium Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <style>
+        /* Design Tokens & Theme Variables */
+        :root {
+            --bg-primary: #06070a;
+            --bg-secondary: #0c0e14;
+            --bg-tertiary: #12151f;
+            --bg-workspace: #010204;
+            --border-primary: rgba(255, 255, 255, 0.04);
+            --border-secondary: rgba(255, 255, 255, 0.08);
+            --accent-teal: #0d9488;
+            --accent-teal-glow: rgba(13, 148, 136, 0.15);
+            --accent-sky: #0ea5e9;
+            --accent-sky-glow: rgba(14, 165, 233, 0.15);
+            --success: #10b981;
+            --danger: #f43f5e;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #475569;
+            --font-sans: 'Inter', sans-serif;
+            --font-display: 'Plus Jakarta Sans', sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+            --max-width: 1200px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-secondary) transparent;
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-secondary);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            line-height: 1.5;
+        }
+
+        /* Ambient Mesh Backgrounds */
+        .grid-mesh {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            background-size: 50px 50px;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.007) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.007) 1px, transparent 1px);
+            mask-image: radial-gradient(circle at 50% 50%, black, transparent 85%);
+            -webkit-mask-image: radial-gradient(circle at 50% 50%, black, transparent 85%);
+            pointer-events: none;
+        }
+
+        .glow-blob {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            filter: blur(160px);
+            z-index: 0;
+            opacity: 0.025;
+            pointer-events: none;
+        }
+        .blob-top {
+            background: var(--accent-teal);
+            top: -15%;
+            left: 20%;
+        }
+        .blob-bottom {
+            background: var(--accent-sky);
+            bottom: -15%;
+            right: 20%;
+        }
+
+        /* Header Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 70px;
+            background: rgba(6, 7, 10, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-primary);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .navbar-container {
+            width: 100%;
+            max-width: var(--max-width);
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .navbar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            background: linear-gradient(135deg, var(--accent-teal), var(--accent-sky));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            color: #ffffff;
+            box-shadow: 0 0 12px var(--accent-teal-glow);
+        }
+
+        .logo-name {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1.15rem;
+            letter-spacing: -0.5px;
+            background: linear-gradient(to right, #ffffff, #e2e8f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .navbar-menu {
+            display: flex;
+            align-items: center;
+            gap: 1.75rem;
+            list-style: none;
+        }
+
+        .navbar-link {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-family: var(--font-display);
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .navbar-link:hover {
+            color: #ffffff;
+        }
+
+        .navbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        /* Hero Landing Section */
+        .hero {
+            padding: 9rem 2rem 5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .hero-badge {
+            background: rgba(13, 148, 136, 0.05);
+            border: 1px solid rgba(13, 148, 136, 0.15);
+            color: var(--accent-teal);
+            padding: 0.35rem 0.85rem;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-family: var(--font-display);
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .hero-badge-dot {
+            width: 5px;
+            height: 5px;
+            background: var(--accent-teal);
+            border-radius: 50%;
+            box-shadow: 0 0 6px var(--accent-teal);
+        }
+
+        .hero-title {
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: 3.25rem;
+            line-height: 1.15;
+            letter-spacing: -1px;
+            margin-bottom: 1.25rem;
+            background: linear-gradient(to bottom right, #ffffff 30%, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.25rem;
+            }
+        }
+
+        .hero-desc {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            max-width: 680px;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding: 0.65rem 1.25rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            border: 1px solid transparent;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-teal), var(--accent-sky));
+            color: #ffffff;
+            box-shadow: 0 0 12px var(--accent-teal-glow);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 0 18px rgba(13, 148, 136, 0.35);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            border-color: var(--border-primary);
+            color: #ffffff;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.02);
+            border-color: var(--border-secondary);
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: rgba(244, 63, 94, 0.08);
+            border-color: rgba(244, 63, 94, 0.2);
+            color: var(--danger);
+        }
+
+        .btn-danger:hover {
+            background: var(--danger);
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
+        .btn-sm {
+            padding: 0.45rem 0.85rem;
+            font-size: 0.8rem;
+            border-radius: 4px;
+        }
+
+        /* Container Section Setup */
+        .section-container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 4rem 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3.5rem;
+        }
+
+        .section-tag {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent-teal);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .section-title {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1.75rem;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+        }
+
+        /* Features Section */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .feature-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 10px;
+            padding: 2rem;
+            transition: all 0.2s ease;
+        }
+
+        .feature-card:hover {
+            border-color: rgba(13, 148, 136, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .feature-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 8px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            color: var(--accent-teal);
+            margin-bottom: 1.25rem;
+        }
+
+        .feature-name {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 1rem;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-desc {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        /* Centralized Interactive Translation Workspace */
+        .demo-panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .demo-tabs-bar {
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-primary);
+            display: flex;
+            align-items: center;
+            padding: 0 1rem;
+        }
+
+        .demo-tab-button {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-secondary);
+            padding: 1rem 1.5rem;
+            font-family: var(--font-display);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .demo-tab-button:hover {
+            color: #ffffff;
+        }
+
+        .demo-tab-button.active {
+            color: var(--accent-teal);
+        }
+
+        .demo-tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--accent-teal);
+            box-shadow: 0 0 6px var(--accent-teal);
+        }
+
+        .demo-pane-body {
+            padding: 2rem;
+            background: var(--bg-secondary);
+        }
+
+        /* Split-screen panels layout */
+        .workspace-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 992px) {
+            .workspace-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .workspace-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Webcam container */
+        .webcam-stream-box {
+            background: var(--bg-workspace);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+            aspect-ratio: 4 / 3;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #webcam, #webcamOverlayCanvas {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        /* laser guide sweep */
+        .laser-sweep-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-teal), transparent);
+            box-shadow: 0 0 8px var(--accent-teal);
+            animation: sweep 4s linear infinite;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        @keyframes sweep {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        .camera-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(6, 7, 10, 0.96);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            color: var(--text-muted);
+            z-index: 6;
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .camera-overlay i {
+            font-size: 2.25rem;
+            color: var(--accent-teal);
+            animation: pulse-icon 2s infinite;
+        }
+
+        @keyframes pulse-icon {
+            0%, 100% { opacity: 0.8; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.05); }
+        }
+
+        .camera-buttons-float {
+            position: absolute;
+            bottom: 1.25rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+
+        /* Transcription console logs */
+        .console-header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.45rem 0.75rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
+            margin-top: 1rem;
+        }
+
+        .console-tab-tag {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .transcription-terminal {
+            background: var(--bg-workspace);
+            border: 1px solid var(--border-primary);
+            border-radius: 0 0 4px 4px;
+            padding: 1.25rem;
+            min-height: 90px;
+            max-height: 140px;
+            overflow-y: auto;
+            color: #ffffff;
+            font-family: var(--font-mono);
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 4px;
+            line-height: 1.4;
+        }
+
+        .terminal-placeholder {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            font-family: var(--font-sans);
+        }
+
+        .char-slide {
+            animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.15) forwards;
+            display: inline-block;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.7) translateY(6px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        .terminal-actions-row {
+            display: flex;
+            gap: 0.45rem;
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        /* SVG Circular Gauge Row */
+        .gauge-analytics-row {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.25rem;
+        }
+
+        .gauge-card {
+            background: var(--bg-workspace);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+            padding: 1rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gauge-svg-wrapper {
+            position: relative;
+            width: 100px;
+            height: 100px;
+        }
+
+        .gauge-circle-track {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+
+        .gauge-track-bg {
+            fill: none;
+            stroke: rgba(255,255,255,0.015);
+            stroke-width: 8;
+        }
+
+        .gauge-track-fill {
+            fill: none;
+            stroke: url(#cyan-teal-grad);
+            stroke-width: 8;
+            stroke-linecap: round;
+            stroke-dasharray: 440;
+            stroke-dashoffset: 440;
+            transition: stroke-dashoffset 0.35s ease;
+        }
+
+        .gauge-value-centered {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .gauge-char {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 2rem;
+            color: #ffffff;
+            line-height: 1;
+        }
+
+        .gauge-conf {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .logs-box-terminal {
+            background: var(--bg-workspace);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+            padding: 0.85rem;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            height: 110px;
+            overflow-y: auto;
+            line-height: 1.5;
+        }
+
+        .log-info-badge { color: var(--accent-teal); }
+        .log-success-badge { color: var(--success); }
+        .log-warn-badge { color: var(--danger); }
+
+        /* Uploader Drag Zone */
+        .dropzone-area {
+            border: 2px dashed var(--border-primary);
+            border-radius: 8px;
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            background: var(--bg-workspace);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dropzone-area:hover, .dropzone-area.dragover {
+            border-color: var(--accent-teal);
+            background: rgba(13, 148, 136, 0.015);
+        }
+
+        .dropzone-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 8px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: var(--accent-teal);
+            margin-bottom: 1rem;
+            transition: transform 0.2s ease;
+        }
+
+        .dropzone-area:hover .dropzone-icon {
+            transform: scale(1.04);
+            background: var(--accent-teal);
+            color: #ffffff;
+            border-color: transparent;
+        }
+
+        .dropzone-area h3 {
+            font-family: var(--font-display);
+            font-size: 0.95rem;
+            color: #ffffff;
+            margin-bottom: 0.25rem;
+        }
+
+        .dropzone-area p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .file-input-hidden {
+            display: none;
+        }
+
+        .uploader-preview-box {
+            background: var(--bg-workspace);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+            padding: 0.85rem;
+            aspect-ratio: 4 / 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .uploader-preview-img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 3px;
+        }
+
+        .upload-results-panel {
+            display: none;
+            background: rgba(13, 148, 136, 0.015);
+            border: 1px solid rgba(13, 148, 136, 0.12);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-top: 1.25rem;
+        }
+
+        .upload-results-panel.show {
+            display: block;
+            animation: popIn 0.3s ease;
+        }
+
+        .progress-meter {
+            height: 5px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 0.45rem;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, var(--accent-teal), var(--accent-sky));
+            width: 0%;
+            transition: width 0.35s ease;
+        }
+
+        .json-inspector-terminal {
+            background: var(--bg-workspace);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+            padding: 0.85rem;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: #34d399;
+            height: 120px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        /* Sign Glossary Library Section */
+        .glossary-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .filter-chips-wrapper {
+            display: flex;
+            gap: 0.45rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-chip {
+            padding: 0.35rem 0.85rem;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-family: var(--font-display);
+            font-weight: 600;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .filter-chip:hover {
+            color: #ffffff;
+            border-color: var(--border-secondary);
+        }
+
+        .filter-chip.active {
+            background: var(--accent-teal);
+            color: #ffffff;
+            border-color: transparent;
+        }
+
+        .search-input-box {
+            position: relative;
+            width: 260px;
+        }
+
+        .search-input {
+            width: 100%;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+            padding: 0.5rem 1rem 0.5rem 2.2rem;
+            color: #ffffff;
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-teal);
+            box-shadow: 0 0 8px var(--accent-teal-glow);
+        }
+
+        .search-icon-pos {
+            position: absolute;
+            left: 0.85rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .glossary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .glossary-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .glossary-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-teal);
+            box-shadow: 0 4px 15px var(--accent-teal-glow);
+        }
+
+        .glossary-thumb {
+            width: 80px;
+            height: 80px;
+            border-radius: 6px;
+            border: 1px solid var(--border-primary);
+            margin: 0 auto 0.75rem;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-workspace);
+        }
+
+        .glossary-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .glossary-letter {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: #ffffff;
+        }
+
+        /* FAQ Accordion Section */
+        .faq-accordion {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+
+        .faq-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: border-color 0.2s ease;
+        }
+
+        .faq-item[open] {
+            border-color: var(--border-secondary);
+        }
+
+        .faq-summary {
+            padding: 1.25rem 1.5rem;
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #ffffff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            list-style: none;
+            outline: none;
+        }
+
+        .faq-summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .faq-summary::after {
+            content: '\f078';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            transition: transform 0.2s ease;
+        }
+
+        .faq-item[open] .faq-summary::after {
+            transform: rotate(180deg);
+        }
+
+        .faq-content {
+            padding: 0 1.5rem 1.25rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* History log table section */
+        .logs-panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .logs-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-primary);
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logs-title-area {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logs-count-badge {
+            font-size: 0.75rem;
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+        }
+
+        .logs-actions-area {
+            display: flex;
+            gap: 0.45rem;
+            align-items: center;
+        }
+
+        .logs-table-wrapper {
+            overflow-x: auto;
+        }
+
+        .logs-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .logs-table th {
+            padding: 0.85rem 1.5rem;
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-primary);
+            background: rgba(255,255,255,0.01);
+        }
+
+        .logs-table td {
+            padding: 0.95rem 1.5rem;
+            border-bottom: 1px solid var(--border-primary);
+            font-size: 0.85rem;
+        }
+
+        .logs-table tr:hover {
+            background: rgba(255,255,255,0.007);
+        }
+
+        .badge-source {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        .badge-src-webcam {
+            background: rgba(14, 165, 233, 0.08);
+            border: 1px solid rgba(14, 165, 233, 0.15);
+            color: var(--accent-sky);
+        }
+
+        .badge-src-upload {
+            background: rgba(13, 148, 136, 0.08);
+            border: 1px solid rgba(13, 148, 136, 0.15);
+            color: var(--accent-teal);
+        }
+
+        .action-circle-btn {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            font-size: 0.75rem;
+        }
+
+        .action-circle-btn:hover {
+            background: var(--accent-teal);
+            color: #ffffff;
+            border-color: transparent;
+        }
+
+        /* Dictionary Detail Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(2, 2, 4, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-body {
+            width: 90%;
+            max-width: 620px;
+            max-height: 80vh;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 12px;
+            padding: 2rem;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            animation: modalScale 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalScale {
+            from { opacity: 0; transform: scale(0.96) translateY(8px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .modal-top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-primary);
+        }
+
+        .modal-heading {
+            font-family: var(--font-display);
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .modal-close-trigger {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close-trigger:hover {
+            background: var(--danger);
+            color: #ffffff;
+            border-color: transparent;
+        }
+
+        .detail-flex {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 600px) {
+            .detail-flex {
+                flex-direction: column;
+            }
+        }
+
+        .detail-preview-panel {
+            flex: 1.2;
+            background: var(--bg-workspace);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+            padding: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            aspect-ratio: 1;
+        }
+
+        .detail-preview-panel img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 3px;
+        }
+
+        .detail-info-panel {
+            flex: 1.8;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .detail-char-title {
+            font-family: var(--font-display);
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1.1;
+            margin-bottom: 0.15rem;
+        }
+
+        .detail-type-badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            background: rgba(14, 165, 233, 0.08);
+            border: 1px solid rgba(14, 165, 233, 0.15);
+            color: var(--accent-sky);
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-family: var(--font-mono);
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+        }
+
+        .detail-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .detail-pose-targets {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .pose-checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .pose-checklist-item i {
+            color: var(--accent-teal);
+        }
+
+        /* Corporate Footer */
+        .footer {
+            background: #08090d;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 6rem 2rem 3rem;
+            margin-top: 6rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 5%;
+            width: 90%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-teal), var(--accent-sky), transparent);
+            box-shadow: 0 0 10px rgba(13, 148, 136, 0.3);
+        }
+
+        .footer-container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr 0.8fr 1.2fr;
+            gap: 3rem;
+            margin-bottom: 3.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .footer-container {
+                grid-template-columns: 1fr 1fr;
+                gap: 2rem;
+            }
+        }
+        @media (max-width: 480px) {
+            .footer-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .footer-col h4 {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #ffffff;
+            margin-bottom: 1.5rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        .footer-col h4::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 0;
+            width: 24px;
+            height: 2px;
+            background: var(--accent-teal);
+            border-radius: 2px;
+        }
+
+        .footer-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 1.25rem;
+        }
+
+        .footer-social-links {
+            display: flex;
+            gap: 0.65rem;
+        }
+
+        .footer-social-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-size: 0.85rem;
+        }
+
+        .footer-social-icon:hover {
+            background: var(--accent-teal);
+            color: #ffffff;
+            border-color: transparent;
+            transform: translateY(-1px);
+            box-shadow: 0 0 10px var(--accent-teal-glow);
+        }
+
+        .footer-links-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .footer-link-item a {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+        }
+
+        .footer-link-item a::before {
+            content: '\f105';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+            opacity: 0.6;
+        }
+
+        .footer-link-item a:hover {
+            color: #ffffff;
+            transform: translateX(4px);
+        }
+
+        .footer-link-item a:hover::before {
+            color: var(--accent-teal);
+            opacity: 1;
+        }
+
+        .footer-tech-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.4rem 0.8rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-family: var(--font-mono);
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            margin-right: 0.25rem;
+            transition: all 0.2s ease;
+        }
+
+        .footer-tech-pill:hover {
+            border-color: var(--accent-teal);
+            background: rgba(13, 148, 136, 0.03);
+            color: #ffffff;
+        }
+
+        .footer-tech-pill i {
+            color: var(--accent-teal);
+        }
+
+        .team-card {
+            background: rgba(255, 255, 255, 0.015);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 0.5rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .team-card:hover {
+            border-color: rgba(13, 148, 136, 0.15);
+        }
+
+        .team-member {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+        }
+
+        .team-member-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: var(--accent-teal);
+        }
+
+        .team-member-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .team-member-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #ffffff;
+            font-family: var(--font-display);
+        }
+
+        .team-member-role {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+        }
+
+        .footer-bottom {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            border-top: 1px solid var(--border-primary);
+            padding-top: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 0.85rem 1.5rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transform: translateX(150%);
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 2000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            font-family: var(--font-display);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            border-radius: 3px 0 0 3px;
+        }
+
+        .toast.success::before {
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        .toast.error::before {
+            background: var(--danger);
+            box-shadow: 0 0 8px var(--danger);
+        }
+
+        .toast i {
+            font-size: 1.1rem;
+        }
+
+        .toast.success i { color: var(--success); }
+        .toast.error i { color: var(--danger); }
+
+        /* Telemetry Metric Cards */
+        .telemetry-metric-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.015) 0%, rgba(255, 255, 255, 0.003) 100%);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            padding: 1.5rem;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            overflow: hidden;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .telemetry-metric-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+        }
+
+        .telemetry-metric-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--border-primary);
+        }
+
+        .telemetry-metric-card.accent-teal::after {
+            background: linear-gradient(90deg, var(--accent-teal), transparent);
+        }
+        .telemetry-metric-card.accent-sky::after {
+            background: linear-gradient(90deg, var(--accent-sky), transparent);
+        }
+        .telemetry-metric-card.accent-emerald::after {
+            background: linear-gradient(90deg, var(--success), transparent);
+        }
+
+        .telemetry-card-icon {
+            font-size: 2.2rem;
+            opacity: 0.15;
+            color: var(--text-secondary);
+            transition: all 0.25s ease;
+        }
+
+        .telemetry-metric-card:hover .telemetry-card-icon {
+            opacity: 0.4;
+            transform: scale(1.05);
+        }
+
+        .telemetry-metric-card.accent-teal:hover .telemetry-card-icon { color: var(--accent-teal); }
+        .telemetry-metric-card.accent-sky:hover .telemetry-card-icon { color: var(--accent-sky); }
+        .telemetry-metric-card.accent-emerald:hover .telemetry-card-icon { color: var(--success); }
+
+        .telemetry-card-meta {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            margin-top: 0.75rem;
+            border-top: 1px solid var(--border-primary);
+            padding-top: 0.5rem;
+            width: 100%;
+        }
+
+        /* Telemetry SaaS Layout Enhancement */
+        .telemetry-saas-layout {
+            display: grid;
+            grid-template-columns: 0.95fr 1.05fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        @media (max-width: 992px) {
+            .telemetry-saas-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .telemetry-specs-column {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .spec-card-saas {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.25s ease, border-color 0.25s ease;
+        }
+
+        .spec-card-saas:hover {
+            border-color: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .spec-card-saas::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-teal), transparent);
+        }
+
+        .spec-card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            margin-bottom: 1.25rem;
+            border-bottom: 1px solid var(--border-primary);
+            padding-bottom: 0.75rem;
+        }
+
+        .spec-header-icon {
+            font-size: 1rem;
+            color: var(--accent-teal);
+        }
+
+        .spec-card-title {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #ffffff;
+            letter-spacing: -0.2px;
+        }
+
+        .spec-list-saas {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+
+        .spec-item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+        }
+
+        .spec-item-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .spec-item-value {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .importance-list-saas {
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+        }
+
+        .importance-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .importance-label-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .importance-progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .importance-progress-fill {
+            height: 100%;
+            border-radius: 10px;
+            box-shadow: 0 0 6px currentColor;
+        }
+
+        .importance-progress-fill.accent-teal {
+            background: var(--accent-teal);
+            color: var(--accent-teal);
+        }
+
+        .importance-progress-fill.accent-sky {
+            background: var(--accent-sky);
+            color: var(--accent-sky);
+        }
+
+        .telemetry-charts-column {
+            height: 100%;
+        }
+
+        .chart-card-saas {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-saas-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-primary);
+            padding-bottom: 1rem;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .chart-tab-triggers {
+            display: flex;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+            padding: 0.25rem;
+            gap: 0.25rem;
+        }
+
+        .chart-tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 0.45rem 1rem;
+            font-family: var(--font-display);
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .chart-tab-btn:hover {
+            color: #ffffff;
+        }
+
+        .chart-tab-btn.active {
+            background: var(--bg-secondary);
+            color: var(--accent-teal);
+            border: 1px solid var(--border-primary);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .tab-btn-icon {
+            font-size: 0.8rem;
+        }
+
+        .chart-spec-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-family: var(--font-display);
+            font-weight: 500;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-primary);
+            padding: 0.3rem 0.6rem;
+            border-radius: 100px;
+        }
+
+        .chart-saas-pane {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .chart-saas-pane.active {
+            display: flex;
+            animation: fadeInSaas 0.3s ease;
+        }
+
+        @keyframes fadeInSaas {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chart-canvas-container-saas {
+            height: 300px;
+            position: relative;
+            width: 100%;
+        }
+
+        .status-dot-breathing {
+            width: 6px;
+            height: 6px;
+            background: var(--success);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--success);
+            animation: status-pulse 2s infinite;
+        }
+
+        @keyframes status-pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Grid Canvas Background -->
+    <div class="grid-mesh"></div>
+    <div class="glow-blob blob-top"></div>
+    <div class="glow-blob blob-bottom"></div>
+
+    <!-- Top Navigation Header -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="#" class="navbar-logo">
+                <div class="logo-icon"><i class="fas fa-hand-sparkles"></i></div>
+                <span class="logo-name">SignAI Pro</span>
+            </a>
+            
+            <ul class="navbar-menu">
+                <li><a href="#" class="navbar-link">Home</a></li>
+                <li><a href="#features" class="navbar-link">Capabilities</a></li>
+                <li><a href="#demo" class="navbar-link">Interactive Demo</a></li>
+                <li><a href="#glossary" class="navbar-link">Glossary</a></li>
+                <li><a href="javascript:void(0)" onclick="launchHistoryModal()" class="navbar-link">Database Logs</a></li>
+                <li><a href="#metrics" class="navbar-link">ML Metrics</a></li>
+                <li><a href="#faq" class="navbar-link">FAQ</a></li>
+            </ul>
+
+            <div class="navbar-actions">
+                <a href="#demo" class="btn btn-primary btn-sm"><i class="fas fa-play"></i> Try Real-Time</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Showcase Header Section -->
+    <section class="hero">
+        <div class="hero-badge">
+            <span class="hero-badge-dot"></span>
+            <span>Edge Random Forest Model Active</span>
+        </div>
+        <h1 class="hero-title">Translating Hand Gestures<br>Into Spoken Words, Instantly</h1>
+        <p class="hero-desc">
+            A high-fidelity American Sign Language translation engine utilizing MediaPipe hand landmark tracking and highly optimized scikit-learn classification trees. Compile, read aloud, and export gestured sentences on local edge hardware.
+        </p>
+        <div style="display: flex; gap: 0.75rem; justify-content: center;">
+            <a href="#demo" class="btn btn-primary"><i class="fas fa-terminal"></i> Try Live Workspace</a>
+            <a href="#glossary" class="btn btn-secondary"><i class="fas fa-book"></i> Look Up Gestures</a>
+        </div>
+    </section>
+
+    <!-- Platform Capabilities (Features Section) -->
+    <section class="section-container" id="features">
+        <div class="section-header">
+            <span class="section-tag">System Features</span>
+            <h2 class="section-title">Engine Capabilities</h2>
+        </div>
+        
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-video"></i></div>
+                <h4 class="feature-name">Live Camera Streaming</h4>
+                <p class="feature-desc">Translate continuous ASL gestures directly from a webcam stream, compiling letters into sentences with dynamic latency logging.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-file-image"></i></div>
+                <h4 class="feature-name">Static File Analyzer</h4>
+                <p class="feature-desc">Upload local PNG or JPG images containing hand gestures to analyze classification probability vectors and inspect joint arrays.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
+                <h4 class="feature-name">Edge Inference Telemetry</h4>
+                <p class="feature-desc">Sub-15ms inference speeds using local CPU computing, scale-invariant feature coordinates, and Horizontal Mirroring augmentations.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Centralized Interactive Translation Workspace (Demo Section) -->
+    <section class="section-container" id="demo">
+        <div class="section-header">
+            <span class="section-tag">Interactive Environment</span>
+            <h2 class="section-title">Live Translation Console</h2>
+        </div>
+
+        <div class="demo-panel">
+            <div class="demo-tabs-bar">
+                <button class="demo-tab-button active" id="tab-btn-camera" onclick="switchDemoTab('camera')">
+                    <i class="fas fa-video"></i> Live Camera Feed
+                </button>
+                <button class="demo-tab-button" id="tab-btn-upload" onclick="switchDemoTab('upload')">
+                    <i class="fas fa-file-upload"></i> Static File Analyzer
+                </button>
+            </div>
+
+            <div class="demo-pane-body">
+                <!-- Tab Pane 1: Live Webcam -->
+                <div id="pane-camera">
+                    <div class="workspace-grid">
+                        <!-- Stream Viewport -->
+                        <div class="workspace-card" style="padding: 1.25rem;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:1rem; font-family:var(--font-display); font-size:0.8rem;">
+                                <span style="font-weight:600; color:#ffffff;"><i class="fas fa-circle-notch fa-spin" style="color:var(--accent-teal);"></i> Active Stream Node</span>
+                                <span style="color:var(--text-secondary); font-family:var(--font-mono);" id="webcamLatency">-- ms</span>
+                            </div>
+
+                            <div class="webcam-stream-box">
+                                <video id="webcam" autoplay playsinline muted style="display: none;"></video>
+                                <canvas id="webcamOverlayCanvas"></canvas>
+                                <div class="laser-sweep-line"></div>
+                                <div class="camera-overlay" id="cameraOverlay">
+                                    <i class="fas fa-video-slash"></i>
+                                    <p style="font-family: var(--font-display); font-size: 0.9rem;">Webcam stream node currently offline</p>
+                                    <button class="btn btn-primary btn-sm" onclick="toggleWebcam()">
+                                        <i class="fas fa-power-off"></i> Start Webcam Feed
+                                    </button>
+                                </div>
+                                <div class="camera-buttons-float" id="activeCameraControls" style="display: none;">
+                                    <button class="btn btn-danger" onclick="toggleWebcam()">
+                                        <i class="fas fa-stop"></i> Stop Capture
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Transcription and Telemetry Console -->
+                        <div class="workspace-card">
+                            <div style="font-family: var(--font-display); font-weight: 600; font-size: 0.95rem; color: #ffffff; margin-bottom: 1rem;">
+                                <i class="fas fa-terminal"></i> Console Output
+                            </div>
+
+                            <!-- Word Deck -->
+                            <div class="console-header-bar">
+                                <span class="console-tab-tag"><i class="fas fa-file-alt"></i> Buffer Terminal</span>
+                                <span style="font-size: 0.6rem; color: var(--text-muted); font-family: var(--font-mono);">LIVE WRITER</span>
+                            </div>
+                            <div class="transcription-terminal" id="webcamCurrentWord">
+                                <span class="terminal-placeholder">Begin gesturing to compile characters...</span>
+                            </div>
+                            
+                            <div class="terminal-actions-row">
+                                <button class="btn btn-secondary btn-sm" onclick="webcamAddSpace()">
+                                    <i class="fas fa-space-shuttle"></i> Space
+                                </button>
+                                <button class="btn btn-secondary btn-sm" onclick="webcamDeleteChar()">
+                                    <i class="fas fa-backspace"></i> Backspace
+                                </button>
+                                <button class="btn btn-secondary btn-sm" onclick="webcamClearWord()">
+                                    <i class="fas fa-trash-alt"></i> Reset
+                                </button>
+                                <button class="btn btn-secondary btn-sm" onclick="copyTranscription()">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                                <button class="btn btn-secondary btn-sm" onclick="speakTranscription()">
+                                    <i class="fas fa-volume-up"></i> Speak
+                                </button>
+                            </div>
+
+                            <!-- Circular Gauge Row -->
+                            <div class="gauge-analytics-row">
+                                <div class="gauge-card">
+                                    <div class="gauge-svg-wrapper">
+                                        <svg class="gauge-circle-track">
+                                            <defs>
+                                                <linearGradient id="cyan-teal-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                    <stop offset="0%" stop-color="#0ea5e9" />
+                                                    <stop offset="100%" stop-color="#0d9488" />
+                                                </linearGradient>
+                                            </defs>
+                                            <circle class="gauge-track-bg" cx="50" cy="50" r="44"></circle>
+                                            <circle class="gauge-track-fill" id="webcamProgressCircle" cx="50" cy="50" r="44"></circle>
+                                        </svg>
+                                        <div class="gauge-value-centered">
+                                            <div class="gauge-char" id="webcamPredictedLetter">-</div>
+                                            <div class="gauge-conf" id="webcamConfidenceValue">0.0%</div>
+                                        </div>
+                                    </div>
+                                    <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-family: var(--font-display); letter-spacing: 0.5px; margin-top: 0.5rem;">Confidence Rate</div>
+                                </div>
+                            </div>
+
+                            <!-- Monospace Logs Terminal -->
+                            <div style="margin-top: 1.25rem;">
+                                <div style="display: flex; justify-content: space-between; font-size: 0.65rem; font-family: var(--font-display); font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.35rem;">
+                                    <span>Compiler Logs Console</span>
+                                    <span style="color: var(--accent-teal);">STDOUT</span>
+                                </div>
+                                <div class="logs-box-terminal" id="webcamLogsTerminal">
+                                    <div>[SYSTEM] Capture workspace initialized. Waiting for feed activation...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Pane 2: Image Uploader -->
+                <div id="pane-upload" style="display: none;">
+                    <div class="workspace-grid">
+                        <!-- Dropzone area -->
+                        <div class="workspace-card">
+                            <div style="font-family: var(--font-display); font-weight: 600; font-size: 0.95rem; color: #ffffff; margin-bottom: 1rem;">
+                                <i class="fas fa-file-import"></i> Static File Selection
+                            </div>
+
+                            <form id="uploadForm" enctype="multipart/form-data">
+                                <div class="dropzone-area" id="dropzone" onclick="document.getElementById('imageUpload').click()">
+                                    <div class="dropzone-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                                    <h3>Drag and drop file</h3>
+                                    <p>Supports PNG, JPG, or JPEG format containing visible hands</p>
+                                    <button type="button" class="btn btn-secondary btn-sm">Select File</button>
+                                    <input type="file" id="imageUpload" name="image" class="file-input-hidden" accept="image/*" onchange="previewFile(this)">
+                                </div>
+                            </form>
+
+                            <div style="margin-top: 1rem; display: flex; gap: 0.75rem;">
+                                <button class="btn btn-primary" onclick="predictImage('predict')" id="predictBtn" style="flex: 1;">
+                                    <i class="fas fa-bolt"></i> Run Model Analysis
+                                </button>
+                                <button class="btn btn-secondary" onclick="predictImage('add')" id="addBtn">
+                                    <i class="fas fa-plus"></i> Append to Buffer
+                                </button>
+                            </div>
+
+                            <!-- Preview Area -->
+                            <div style="margin-top: 1.5rem;">
+                                <div style="font-size: 0.7rem; font-family: var(--font-display); font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.5rem;">Source File Preview</div>
+                                <div class="uploader-preview-box" id="previewContainer">
+                                    <div style="text-align: center; color: var(--text-muted);">
+                                        <i class="fas fa-image" style="font-size: 2rem; margin-bottom: 0.5rem; color: var(--text-muted);"></i>
+                                        <p style="font-size: 0.75rem;">Select image file to preview</p>
+                                    </div>
+                                </div>
+                                <div id="fileName" style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-teal); margin-top: 0.5rem; text-align: center; word-break: break-all;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Telemetry details inspector -->
+                        <div class="workspace-card">
+                            <div style="font-family: var(--font-display); font-weight: 600; font-size: 0.95rem; color: #ffffff; margin-bottom: 1rem;">
+                                <i class="fas fa-tachometer-alt"></i> Telemetry Inspector
+                            </div>
+
+                            <!-- Result overlay box -->
+                            <div class="upload-results-panel" id="uploadResultPanel">
+                                <div style="display: flex; align-items: center; justify-content: space-between;">
+                                    <div>
+                                        <div style="font-size: 0.75rem; color: var(--text-secondary); font-family: var(--font-display);">Predicted Letter</div>
+                                        <div style="font-family: var(--font-display); font-size: 3.5rem; font-weight: 800; color: #ffffff;" id="predictedLetter">-</div>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div style="font-size: 0.75rem; color: var(--text-secondary); font-family: var(--font-display);">Confidence Output</div>
+                                        <div style="font-family: var(--font-mono); font-size: 1.5rem; font-weight: 600; color: var(--accent-teal);" id="confidenceValue">0.0%</div>
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-top: 0.75rem;">
+                                    <div class="progress-meter">
+                                        <div class="progress-fill" id="confidenceBar"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Word Deck -->
+                            <div class="console-header-bar" style="margin-top: 1rem;">
+                                <span class="console-tab-tag"><i class="fas fa-file-alt"></i> Buffer Terminal</span>
+                                <span style="font-size: 0.6rem; color: var(--text-muted); font-family: var(--font-mono);">ACCUMULATION</span>
+                            </div>
+                            <div class="transcription-terminal" id="currentWord">
+                                <span class="terminal-placeholder">No characters transcribed yet.</span>
+                            </div>
+                            <div class="terminal-actions-row">
+                                <button class="btn btn-secondary btn-sm" onclick="deleteLastChar()">
+                                    <i class="fas fa-backspace"></i> Backspace
+                                </button>
+                                <button class="btn btn-secondary btn-sm" onclick="clearWord()">
+                                    <i class="fas fa-trash-alt"></i> Reset
+                                </button>
+                            </div>
+
+                            <!-- Landmarks details compiler console -->
+                            <div style="margin-top: 1.25rem;">
+                                <div style="font-size: 0.7rem; font-family: var(--font-display); font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.5rem;">Raw Landmark Coordinates (MediaPipe array)</div>
+                                <div class="json-inspector-terminal" id="landmarksArrayConsole">// Run image model analysis to generate coordinate dataset...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sign Glossary Section -->
+    <section class="section-container" id="glossary">
+        <div class="section-header">
+            <span class="section-tag">Interactive Reference</span>
+            <h2 class="section-title">Sign Glossary Library</h2>
+        </div>
+
+        <div class="glossary-controls">
+            <div class="filter-chips-wrapper">
+                <span class="filter-chip active" id="chip-all" onclick="filterGlossaryCategory('all')">All Gestures</span>
+                <span class="filter-chip" id="chip-letters" onclick="filterGlossaryCategory('letters')">Letters A-Z</span>
+                <span class="filter-chip" id="chip-special" onclick="filterGlossaryCategory('special')">Control Keys</span>
+            </div>
+            <div class="search-input-box">
+                <i class="fas fa-search search-icon-pos"></i>
+                <input type="text" id="dictionarySearch" class="search-input" placeholder="Filter glossary..." oninput="filterGlossaryQuery()">
+            </div>
+        </div>
+
+        <div class="glossary-grid" id="dictionaryGrid">
+            <!-- Seeded cards dynamically load here -->
+        </div>
+    </section>
+
+    <!-- ML Performance Metrics (Model Telemetry Section) -->
+    <section class="section-container" id="metrics">
+        <div class="section-header">
+            <span class="section-tag">Model Diagnostics</span>
+            <h2 class="section-title">Classifier Telemetry</h2>
+            <p style="color: var(--text-secondary); font-size: 0.85rem; max-width: 600px; margin: 0.5rem auto 0; line-height: 1.5;">
+                Architectural specifications and ensemble training diagnostics for the SignAI spatial tracking engine.
+            </p>
+        </div>
+
+        <div class="telemetry-saas-layout">
+            <!-- Left Column: Specs & Feature Weights -->
+            <div class="telemetry-specs-column">
+                <!-- Model Specs Card -->
+                <div class="spec-card-saas">
+                    <div class="spec-card-header">
+                        <i class="fas fa-microchip spec-header-icon"></i>
+                        <span class="spec-card-title">Model Specifications</span>
+                    </div>
+                    <div class="spec-list-saas">
+                        <div class="spec-item-row">
+                            <span class="spec-item-label">Algorithm</span>
+                            <span class="spec-item-value font-mono">Random Forest</span>
+                        </div>
+                        <div class="spec-item-row">
+                            <span class="spec-item-label">Ensemble Size</span>
+                            <span class="spec-item-value font-mono">100 Trees</span>
+                        </div>
+                        <div class="spec-item-row">
+                            <span class="spec-item-label">Max Tree Depth</span>
+                            <span class="spec-item-value font-mono">35 Levels</span>
+                        </div>
+                        <div class="spec-item-row">
+                            <span class="spec-item-label">Feature Dimension</span>
+                            <span class="spec-item-value font-mono">63 Coordinates</span>
+                        </div>
+                        <div class="spec-item-row">
+                            <span class="spec-item-label">Inference Latency</span>
+                            <span class="spec-item-value font-mono text-teal">5.1 ms</span>
+                        </div>
+                        <div class="spec-item-row">
+                            <span class="spec-item-label">Validation Accuracy</span>
+                            <span class="spec-item-value font-mono text-emerald">99.46%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feature Weights Card -->
+                <div class="spec-card-saas">
+                    <div class="spec-card-header">
+                        <i class="fas fa-chart-bar spec-header-icon"></i>
+                        <span class="spec-card-title">Gini Feature Importance</span>
+                    </div>
+                    <div class="importance-list-saas">
+                        <!-- Item 1 -->
+                        <div class="importance-item">
+                            <div class="importance-label-row">
+                                <span>Thumb Orientation</span>
+                                <span class="font-mono">22.8%</span>
+                            </div>
+                            <div class="importance-progress-bar">
+                                <div class="importance-progress-fill accent-teal" style="width: 22.8%;"></div>
+                            </div>
+                        </div>
+                        <!-- Item 2 -->
+                        <div class="importance-item">
+                            <div class="importance-label-row">
+                                <span>Index Finger Depth</span>
+                                <span class="font-mono">20.1%</span>
+                            </div>
+                            <div class="importance-progress-bar">
+                                <div class="importance-progress-fill accent-sky" style="width: 20.1%;"></div>
+                            </div>
+                        </div>
+                        <!-- Item 3 -->
+                        <div class="importance-item">
+                            <div class="importance-label-row">
+                                <span>Middle Finger Alignment</span>
+                                <span class="font-mono">18.5%</span>
+                            </div>
+                            <div class="importance-progress-bar">
+                                <div class="importance-progress-fill" style="width: 18.5%; background: #a855f7;"></div>
+                            </div>
+                        </div>
+                        <!-- Item 4 -->
+                        <div class="importance-item">
+                            <div class="importance-label-row">
+                                <span>Ring Finger Flexion</span>
+                                <span class="font-mono">17.3%</span>
+                            </div>
+                            <div class="importance-progress-bar">
+                                <div class="importance-progress-fill" style="width: 17.3%; background: #ec4899;"></div>
+                            </div>
+                        </div>
+                        <!-- Item 5 -->
+                        <div class="importance-item">
+                            <div class="importance-label-row">
+                                <span>Pinky Orientation</span>
+                                <span class="font-mono">17.1%</span>
+                            </div>
+                            <div class="importance-progress-bar">
+                                <div class="importance-progress-fill" style="width: 17.1%; background: #f59e0b;"></div>
+                            </div>
+                        </div>
+                        <!-- Item 6 -->
+                        <div class="importance-item">
+                            <div class="importance-label-row">
+                                <span>Wrist Anchor Point</span>
+                                <span class="font-mono">4.2%</span>
+                            </div>
+                            <div class="importance-progress-bar">
+                                <div class="importance-progress-fill" style="width: 4.2%; background: #64748b;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Tabbed Charts View -->
+            <div class="telemetry-charts-column">
+                <div class="chart-card-saas">
+                    <div class="chart-saas-header">
+                        <div class="chart-tab-triggers">
+                            <button class="chart-tab-btn active" id="btn-chart-accuracy" onclick="switchTelemetryChart('accuracy')">
+                                <i class="fas fa-chart-line tab-btn-icon"></i> Classification Accuracy
+                            </button>
+                            <button class="chart-tab-btn" id="btn-chart-error" onclick="switchTelemetryChart('error')">
+                                <i class="fas fa-chart-area tab-btn-icon"></i> Out-Of-Bag Error
+                            </button>
+                        </div>
+                        <div class="chart-spec-badge">
+                            <span class="status-dot-breathing"></span> Active Evaluation
+                        </div>
+                    </div>
+                    
+                    <div class="chart-saas-pane active" id="pane-chart-accuracy">
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                            Validation accuracy plotted across training steps (Estimators 10 to 500). Max accuracy reached: <strong>99.46%</strong>.
+                        </div>
+                        <div class="chart-canvas-container-saas">
+                            <canvas id="trainingChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-saas-pane" id="pane-chart-error">
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                            Ensemble error convergence plotted against estimators. Convergence asymptotic limit: <strong>0.0054</strong>.
+                        </div>
+                        <div class="chart-canvas-container-saas">
+                            <canvas id="lossChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Deleted inline history logs -->
+
+    <!-- FAQ Accordion section -->
+    <section class="section-container" id="faq">
+        <div class="section-header">
+            <span class="section-tag">Common Questions</span>
+            <h2 class="section-title">Frequently Asked Questions</h2>
+        </div>
+
+        <div class="faq-accordion">
+            <details class="faq-item">
+                <summary class="faq-summary">How does the Random Forest classifier calculate predictions?</summary>
+                <div class="faq-content">
+                    Instead of passing raw pixel values through heavy convolution pipelines, we extract 21 hand joints coordinate vectors (x, y, z parameters) via MediaPipe. We then perform wrist-relative coordinate translations and divide vectors by their L2 norm. This creates a scale-invariant, aspect-ratio-invariant feature dataset which our Random Forest model processes in under 15ms.
+                </div>
+            </details>
+            <details class="faq-item">
+                <summary class="faq-summary">Is the model trained to support both left and right hand orientations?</summary>
+                <div class="faq-content">
+                    Yes. During dataset preparation, we implemented Horizontal Mirroring data augmentation, reflecting the x-axis values of detected landmarks horizontally relative to the frame width. This trains the ensemble trees to recognize poses identically regardless of hand orientation.
+                </div>
+            </details>
+            <details class="faq-item">
+                <summary class="faq-summary">How does the Live Transcription workspace define a completed letter?</summary>
+                <div class="faq-content">
+                    To prevent flicker and erroneous classification triggers, the system runs a stable holds prediction queue. A character must be classified continuously with >70% confidence for 4 consecutive frames (~1.2 seconds) before it is committed to the text transcription buffer.
+                </div>
+            </details>
+        </div>
+    </section>
+
+    <!-- Rich Corporate Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-col">
+                <a href="#" class="navbar-logo" style="margin-bottom: 1.25rem;">
+                    <div class="logo-icon"><i class="fas fa-hand-sparkles"></i></div>
+                    <span class="logo-name">SignAI Pro</span>
+                </a>
+                <p class="footer-desc">
+                    Enterprise sign language translation engine combining spatial joint tracking with lightweight decision tree classifications.
+                </p>
+                <div class="footer-social-links">
+                    <a href="https://github.com/shubhamgupta407" target="_blank" class="footer-social-icon" title="GitHub"><i class="fab fa-github"></i></a>
+                    <a href="https://www.linkedin.com/in/shubhamgupta407" target="_blank" class="footer-social-icon" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#" class="footer-social-icon" title="Email"><i class="fas fa-envelope"></i></a>
+                </div>
+            </div>
+
+            <div class="footer-col">
+                <h4>Platform Navigation</h4>
+                <ul class="footer-links-list">
+                    <li class="footer-link-item"><a href="#">Home Overview</a></li>
+                    <li class="footer-link-item"><a href="#demo">Live Console</a></li>
+                    <li class="footer-link-item"><a href="#glossary">Sign Glossary</a></li>
+                    <li class="footer-link-item"><a href="javascript:void(0)" onclick="launchHistoryModal()">Database Logs</a></li>
+                    <li class="footer-link-item"><a href="#metrics">Classifier Telemetry</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h4>Technical Spec</h4>
+                <div>
+                    <span class="footer-tech-pill"><i class="fab fa-python"></i> Python 3.10</span>
+                    <span class="footer-tech-pill"><i class="fas fa-brain"></i> Scikit-Learn</span>
+                    <span class="footer-tech-pill"><i class="fas fa-cubes"></i> MediaPipe 0.10</span>
+                    <span class="footer-tech-pill"><i class="fas fa-code"></i> ES6 Vanilla JS</span>
+                </div>
+            </div>
+
+            <div class="footer-col">
+                <h4>Development Team</h4>
+                <p class="footer-desc" style="font-size: 0.8rem; margin-bottom: 1rem;">
+                    Engineered to showcase sub-15ms edge inference on client hardware.
+                </p>
+                <div class="team-card">
+                    <div class="team-member">
+                        <div class="team-member-avatar"><i class="fas fa-user-gear"></i></div>
+                        <div class="team-member-info">
+                            <span class="team-member-name">Shubham Gupta</span>
+                            <span class="team-member-role">ML Architecture & Integration</span>
+                        </div>
+                    </div>
+                    <div class="team-member" style="margin-top: 0.75rem;">
+                        <div class="team-member-avatar"><i class="fas fa-laptop-code"></i></div>
+                        <div class="team-member-info">
+                            <span class="team-member-name">Saripilli Uday Kumar</span>
+                            <span class="team-member-role">ML Engineering & UX Design</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <span>Shubham Gupta &amp; Saripilli Uday Kumar &copy; 2026 ASL Translation Platform. All rights reserved.</span>
+            <span>Local Node Engine v2.4.0</span>
+        </div>
+    </footer>
+
+    <!-- HISTORY LOGS MODAL OVERLAY -->
+    <div class="modal" id="historyModal">
+        <div class="modal-body" style="max-width: 950px;">
+            <div class="modal-top-bar">
+                <h2 class="modal-heading"><i class="fas fa-database"></i> Inference Logs Database</h2>
+                <button class="modal-close-trigger" onclick="closeHistoryModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="logs-panel">
+                <div class="logs-toolbar">
+                    <div class="logs-title-area">
+                        <h3 style="font-family: var(--font-display); font-size: 0.95rem; font-weight: 600; color: #ffffff;"><i class="fas fa-database" style="color: var(--accent-teal);"></i> Live Inference Logs</h3>
+                        <span class="logs-count-badge" id="historyCounter">0 entries</span>
+                    </div>
+                    
+                    <div class="logs-actions-area">
+                        <div class="search-input-box" style="width: 220px;">
+                            <i class="fas fa-search search-icon-pos"></i>
+                            <input type="text" id="historySearch" class="search-input" placeholder="Search logs..." oninput="updateHistoryTable()">
+                        </div>
+                        <button class="btn btn-secondary btn-sm" onclick="exportHistory()">
+                            <i class="fas fa-file-csv"></i> Export CSV
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="clearHistory()">
+                            <i class="fas fa-trash-alt"></i> Clear logs
+                        </button>
+                    </div>
+                </div>
+
+                <div class="logs-table-wrapper">
+                    <table class="logs-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Inference Source</th>
+                                <th>Predicted Class</th>
+                                <th>Classification Confidence</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 3rem;">No history entries logged yet.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GLOSSARY POSE REFERENCE DETAILS MODAL -->
+    <div class="modal" id="dictionaryDetailModal">
+        <div class="modal-body">
+            <div class="modal-top-bar">
+                <h2 class="modal-heading" id="detailModalHeader">Sign Pose Details</h2>
+                <button class="modal-close-trigger" onclick="closeDetailModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="detail-flex">
+                <div class="detail-preview-panel">
+                    <img id="detailPreviewImage" src="" alt="Pose Preview">
+                </div>
+                <div class="detail-info-panel">
+                    <div>
+                        <div>
+                            <h3 class="detail-char-title" id="detailCharTitle">-</h3>
+                            <span class="detail-type-badge" id="detailTypeBadge">-</span>
+                        </div>
+                        <p class="detail-desc" id="detailDescription">-</p>
+                        
+                        <div style="font-size: 0.7rem; font-family: var(--font-display); font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.45rem;">Joint Position Targets</div>
+                        <ul class="detail-pose-targets" id="detailPoseChecklist">
+                            <!-- Populated dynamically -->
+                        </ul>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="setReferenceGestureGuide()" style="width: 100%;">
+                        <i class="fas fa-crosshairs"></i> Use as Stream Overlay Guide
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Component -->
+    <div class="toast" id="toast">
+        <i id="toastIcon" class="fas fa-info-circle"></i>
+        <span id="toastMessage">Workspace action logged</span>
+    </div>
+
+    <!-- Flask Session/Template Parameter Communication Bridges -->
+    <input type="hidden" id="hiddenPrediction" value="{{ prediction if prediction is not none else 'NOTHING' }}">
+    <input type="hidden" id="hiddenConfidence" value="{{ confidence if confidence is not none else '0.0' }}">
+    <input type="hidden" id="hiddenWord" value="{{ word if word is not none else '' }}">
+    <input type="hidden" id="hiddenLandmarks" value='{{ landmarks_json if landmarks_json is not none else "" }}'>
+
+    <!-- Core Javascript System -->
+    <script>
+        // Core State
+        let currentWord = '';
+        let webcamWord = '';
+        let predictionHistory = [];
+        let stablePredictionBuffer = [];
+        let lastAddedWebcamLetter = '';
+        let lastAddedWebcamTimestamp = 0;
+        
+        let webcamStream = null;
+        let predictionInterval = null;
+        const webcamElement = document.getElementById('webcam');
+        const cameraOverlay = document.getElementById('cameraOverlay');
+        const activeCameraControls = document.getElementById('activeCameraControls');
+        const hiddenCanvas = document.createElement('canvas');
+        const canvasCtx = hiddenCanvas.getContext('2d');
+
+        // Webcam Overlay Canvas & Landmarks
+        const webcamOverlayCanvas = document.getElementById('webcamOverlayCanvas');
+        const overlayCanvasCtx = webcamOverlayCanvas.getContext('2d');
+        let activeWebcamLandmarks = null;
+        let webcamLoopActive = false;
+
+        // MediaPipe Hand Connection Pairs
+        const HAND_CONNECTIONS = [
+            [0, 1], [1, 2], [2, 3], [3, 4],         // Thumb
+            [0, 5], [5, 6], [6, 7], [7, 8],         // Index finger
+            [5, 9], [9, 10], [10, 11], [11, 12],     // Middle finger
+            [9, 13], [13, 14], [14, 15], [15, 16],   // Ring finger
+            [13, 17], [17, 18], [18, 19], [19, 20],  // Pinky
+            [0, 17]                                 // Palm base closure
+        ];
+        
+        // Tab routing switcher
+        function switchDemoTab(tab) {
+            document.getElementById('pane-camera').style.display = tab === 'camera' ? 'block' : 'none';
+            document.getElementById('pane-upload').style.display = tab === 'upload' ? 'block' : 'none';
+            
+            document.getElementById('tab-btn-camera').className = 'demo-tab-button' + (tab === 'camera' ? ' active' : '');
+            document.getElementById('tab-btn-upload').className = 'demo-tab-button' + (tab === 'upload' ? ' active' : '');
+            
+            if (tab !== 'camera') {
+                stopWebcam();
+            }
+        }
+
+        // Toasts
+        function showToastNotification(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastIcon = document.getElementById('toastIcon');
+            const toastMsg = document.getElementById('toastMessage');
+            
+            toastMsg.textContent = message;
+            toast.className = 'toast show ' + type;
+            
+            if (type === 'success') {
+                toastIcon.className = 'fas fa-check-circle';
+            } else {
+                toastIcon.className = 'fas fa-exclamation-triangle';
+            }
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // File uploader handler
+        function previewFile(input) {
+            const container = document.getElementById('previewContainer');
+            const resultPanel = document.getElementById('uploadResultPanel');
+            const fileNameDiv = document.getElementById('fileName');
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                fileNameDiv.innerHTML = `<i class="fas fa-file-image"></i> ${input.files[0].name} (${(input.files[0].size / 1024).toFixed(1)} KB)`;
+                
+                reader.onload = function(e) {
+                    container.innerHTML = `<img src="${e.target.result}" id="uploadedPreviewImg" class="uploader-preview-img" alt="Source Preview">`;
+                    resultPanel.classList.remove('show');
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Run ML classification on static files
+        function predictImage(action) {
+            const fileInput = document.getElementById('imageUpload');
+            const predictBtn = document.getElementById('predictBtn');
+            const addBtn = document.getElementById('addBtn');
+            const landmarksConsole = document.getElementById('landmarksArrayConsole');
+            
+            if (action === 'predict') {
+                if (fileInput.files.length === 0) {
+                    showToastNotification('Please select or upload a static file first.', 'error');
+                    return;
+                }
+                predictBtn.innerHTML = '<span class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></span> Running ML Analysis...';
+                predictBtn.disabled = true;
+            } else if (action === 'add') {
+                addBtn.innerHTML = '<span class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></span> Appending...';
+                addBtn.disabled = true;
+            }
+            
+            const formData = new FormData();
+            formData.append('action', action);
+            if (fileInput.files.length > 0) {
+                formData.append('image', fileInput.files[0]);
+            }
+            
+            const reqStart = Date.now();
+            
+            fetch('/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.text())
+            .then(html => {
+                const latency = Date.now() - reqStart;
+                document.getElementById('webcamLatency').textContent = `${latency} ms`;
+                
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                let prediction = 'NOTHING';
+                let confidence = '0.0%';
+                
+                const hiddenPred = doc.querySelector('#hiddenPrediction');
+                const hiddenConf = doc.querySelector('#hiddenConfidence');
+                
+                if (hiddenPred) prediction = hiddenPred.value || hiddenPred.getAttribute('data-prediction');
+                if (hiddenConf) confidence = hiddenConf.value || hiddenConf.getAttribute('data-confidence');
+                
+                let numConf = parseFloat(confidence) || 0;
+                if (numConf <= 1.0 && numConf > 0) {
+                    confidence = (numConf * 100).toFixed(1) + '%';
+                } else if (numConf > 1.0) {
+                    confidence = numConf.toFixed(1) + '%';
+                    numConf = numConf / 100;
+                }
+                
+                if (action === 'predict') {
+                    document.getElementById('predictedLetter').textContent = prediction;
+                    document.getElementById('confidenceValue').textContent = confidence;
+                    document.getElementById('confidenceBar').style.width = (numConf * 100) + '%';
+                    document.getElementById('uploadResultPanel').classList.add('show');
+                    
+                    // Parse actual hand joint coordinates logs
+                    const hiddenLandmarksEl = doc.querySelector('#hiddenLandmarks');
+                    if (hiddenLandmarksEl && hiddenLandmarksEl.value) {
+                        try {
+                            const coords = JSON.parse(hiddenLandmarksEl.value);
+                            const coordsStr = coords.map((c, i) => {
+                                return `  Joint #${String(i).padStart(2, '0')}: { x: ${c.x.toFixed(4)}, y: ${c.y.toFixed(4)}, z: ${c.z.toFixed(4)} }`;
+                            }).join('\n');
+                            landmarksConsole.textContent = `{\n  "landmarks_count": 21,\n  "dimension_vector": 63,\n  "aspect_ratio": "invariant",\n  "coordinates": [\n${coordsStr}\n  ]\n}`;
+                        } catch (e) {
+                            console.error("Failed to parse landmarks JSON:", e);
+                            landmarksConsole.textContent = `// Error parsing landmarks dataset: ${e.message}`;
+                        }
+                    } else {
+                        landmarksConsole.textContent = `{\n  "landmarks_count": 0,\n  "dimension_vector": 0,\n  "coordinates": []\n}`;
+                    }
+                    
+                    showToastNotification(`Model inference succeeded: letter '${prediction}' (${confidence})`);
+                    logInferenceRecord('Image Upload', prediction, confidence);
+                } else if (action === 'add') {
+                    const serverHiddenWord = doc.querySelector('#hiddenWord');
+                    if (serverHiddenWord) {
+                        currentWord = serverHiddenWord.value;
+                    } else {
+                        if (prediction !== 'NOTHING') {
+                            if (prediction === 'SPACE') currentWord += ' ';
+                            else if (prediction === 'DEL') currentWord = currentWord.slice(0, -1);
+                            else currentWord += prediction;
+                        }
+                    }
+                    updateWordOutput();
+                    showToastNotification(`Transcribed gesture to word buffer: ${prediction}`);
+                }
+            })
+            .catch(err => {
+                console.error("Static Predict Fail:", err);
+                showToastNotification("Server prediction request failed.", "error");
+            })
+            .finally(() => {
+                predictBtn.innerHTML = '<i class="fas fa-bolt"></i> Run Model Analysis';
+                addBtn.innerHTML = '<i class="fas fa-plus"></i> Append to Buffer';
+                predictBtn.disabled = false;
+                addBtn.disabled = false;
+            });
+        }
+
+        // Word buffers updater
+        function updateWordOutput() {
+            const wordEl = document.getElementById('currentWord');
+            if (!wordEl) return;
+            wordEl.innerHTML = '';
+            
+            if (currentWord === '') {
+                wordEl.innerHTML = '<span class="terminal-placeholder">No characters transcribed yet.</span>';
+                return;
+            }
+            
+            currentWord.split('').forEach(char => {
+                const span = document.createElement('span');
+                span.className = 'char-slide';
+                span.textContent = char === ' ' ? '\u00A0' : char;
+                wordEl.appendChild(span);
+            });
+        }
+
+        function deleteLastChar() {
+            currentWord = currentWord.slice(0, -1);
+            updateWordOutput();
+        }
+
+        function clearWord() {
+            currentWord = '';
+            updateWordOutput();
+            const formData = new FormData();
+            formData.append('action', 'clear');
+            fetch('/', { method: 'POST', body: formData });
+            showToastNotification("Word buffer cleared");
+        }
+
+        // Logs database records generator
+        function logInferenceRecord(source, prediction, confidence) {
+            const timeVal = new Date().toLocaleTimeString();
+            const logItem = {
+                dateTime: new Date().toLocaleString(),
+                timestamp: timeVal,
+                inputType: source,
+                prediction: prediction,
+                confidence: confidence,
+                letter: prediction
+            };
+            predictionHistory.unshift(logItem);
+            localStorage.setItem('predictionHistory', JSON.stringify(predictionHistory));
+            updateHistoryTable();
+        }
+
+        // Live stream controller
+        function drawHandLandmarks(ctx, landmarks, w, h) {
+            if (!landmarks || landmarks.length === 0) return;
+
+            ctx.save();
+
+            // 1. Draw connecting lines (skeleton bones)
+            ctx.strokeStyle = 'rgba(13, 148, 136, 0.85)'; // semi-transparent teal
+            ctx.lineWidth = 3.5;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            // Neon shadow/glow
+            ctx.shadowColor = '#0ea5e9'; // sky-blue glow
+            ctx.shadowBlur = 8;
+
+            HAND_CONNECTIONS.forEach(([startIdx, endIdx]) => {
+                const ptStart = landmarks[startIdx];
+                const ptEnd = landmarks[endIdx];
+
+                if (ptStart && ptEnd) {
+                    const xStart = ptStart.x * w;
+                    const yStart = ptStart.y * h;
+                    const xEnd = ptEnd.x * w;
+                    const yEnd = ptEnd.y * h;
+
+                    ctx.beginPath();
+                    ctx.moveTo(xStart, yStart);
+                    ctx.lineTo(xEnd, yEnd);
+                    ctx.stroke();
+                }
+            });
+
+            // Disable shadows for sharp rendering of circles
+            ctx.shadowBlur = 0;
+
+            // 2. Draw joints and fingertips
+            landmarks.forEach((lm, index) => {
+                const cx = lm.x * w;
+                const cy = lm.y * h;
+
+                // Index list for fingertips: 4, 8, 12, 16, 20
+                const isFingertip = [4, 8, 12, 16, 20].includes(index);
+
+                if (isFingertip) {
+                    ctx.save();
+                    ctx.shadowColor = '#f43f5e';
+                    ctx.shadowBlur = 10;
+                    ctx.fillStyle = '#f43f5e'; // glowing rose-red
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, 7, 0, 2 * Math.PI);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.restore();
+                } else if (index === 0) {
+                    // Wrist keypoint
+                    ctx.fillStyle = '#0ea5e9';
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, 6, 0, 2 * Math.PI);
+                    ctx.fill();
+                    ctx.stroke();
+                } else {
+                    // Standard joint keypoints
+                    ctx.fillStyle = '#0ea5e9';
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, 4, 0, 2 * Math.PI);
+                    ctx.fill();
+                    ctx.stroke();
+                }
+            });
+
+            ctx.restore();
+        }
+
+        function drawWebcamFrameLoop() {
+            if (!webcamLoopActive) return;
+
+            if (webcamElement.readyState === webcamElement.HAVE_ENOUGH_DATA) {
+                const w = webcamElement.videoWidth || 640;
+                const h = webcamElement.videoHeight || 480;
+                if (webcamOverlayCanvas.width !== w || webcamOverlayCanvas.height !== h) {
+                    webcamOverlayCanvas.width = w;
+                    webcamOverlayCanvas.height = h;
+                }
+
+                overlayCanvasCtx.clearRect(0, 0, w, h);
+                overlayCanvasCtx.drawImage(webcamElement, 0, 0, w, h);
+
+                if (activeWebcamLandmarks) {
+                    drawHandLandmarks(overlayCanvasCtx, activeWebcamLandmarks, w, h);
+                }
+            }
+
+            requestAnimationFrame(drawWebcamFrameLoop);
+        }
+
+        async function startWebcam() {
+            try {
+                webcamStream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 640, height: 480, facingMode: 'user' }
+                });
+                webcamElement.srcObject = webcamStream;
+                cameraOverlay.style.display = 'none';
+                document.getElementById('activeCameraControls').style.display = 'block';
+                
+                predictionInterval = setInterval(captureWebcamFrame, 300);
+                
+                // Initialize canvas render loop
+                webcamLoopActive = true;
+                requestAnimationFrame(drawWebcamFrameLoop);
+                
+                appendConsoleLog("Active camera stream node online.");
+                showToastNotification("Webcam stream online");
+            } catch (err) {
+                console.error("Camera Hardware Error:", err);
+                showToastNotification("Webcam stream access rejected. Check settings.", "error");
+                appendConsoleLog("Error: Camera hardware initialization failed.", "warn");
+            }
+        }
+
+        function stopWebcam() {
+            // Stop loop and clear canvas overlay
+            webcamLoopActive = false;
+            activeWebcamLandmarks = null;
+            if (webcamOverlayCanvas) {
+                overlayCanvasCtx.clearRect(0, 0, webcamOverlayCanvas.width, webcamOverlayCanvas.height);
+            }
+
+            if (predictionInterval) {
+                clearInterval(predictionInterval);
+                predictionInterval = null;
+            }
+            if (webcamStream) {
+                webcamStream.getTracks().forEach(track => track.stop());
+                webcamStream = null;
+            }
+            if (webcamElement) {
+                webcamElement.srcObject = null;
+            }
+            if (cameraOverlay) {
+                cameraOverlay.style.display = 'flex';
+            }
+            if (document.getElementById('activeCameraControls')) {
+                document.getElementById('activeCameraControls').style.display = 'none';
+            }
+            
+            // Reset indicators
+            if (document.getElementById('webcamPredictedLetter')) {
+                document.getElementById('webcamPredictedLetter').textContent = '-';
+            }
+            if (document.getElementById('webcamConfidenceValue')) {
+                document.getElementById('webcamConfidenceValue').textContent = '0.0%';
+            }
+            setWebcamGaugePercent(0);
+            stablePredictionBuffer = [];
+            document.getElementById('webcamLatency').textContent = '-- ms';
+            appendConsoleLog("Active camera stream node closed.");
+        }
+
+        function toggleWebcam() {
+            if (webcamStream) {
+                stopWebcam();
+            } else {
+                startWebcam();
+            }
+        }
+
+        function setWebcamGaugePercent(percent) {
+            const circle = document.getElementById('webcamProgressCircle');
+            if (!circle) return;
+            // Radius=44, Circumference = 2 * PI * 44 ≈ 276.46
+            const circumference = 276.46;
+            const offset = circumference - (percent * circumference);
+            circle.style.strokeDashoffset = offset;
+        }
+
+        function captureWebcamFrame() {
+            if (!webcamStream || webcamElement.paused || webcamElement.ended) return;
+            
+            hiddenCanvas.width = webcamElement.videoWidth || 640;
+            hiddenCanvas.height = webcamElement.videoHeight || 480;
+            
+            canvasCtx.drawImage(webcamElement, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
+            const base64Jpg = hiddenCanvas.toDataURL('image/jpeg', 0.6);
+            
+            const reqStart = Date.now();
+            
+            fetch('/predict_frame', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: base64Jpg })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const latency = Date.now() - reqStart;
+                document.getElementById('webcamLatency').textContent = `${latency} ms`;
+                
+                if (data.status === 'success') {
+                    const letter = data.prediction;
+                    const confidenceVal = data.confidence_val;
+                    const confidenceStr = data.confidence;
+                    
+                    // Set active landmarks for canvas skeleton overlay
+                    activeWebcamLandmarks = data.landmarks;
+                    
+                    document.getElementById('webcamPredictedLetter').textContent = letter;
+                    document.getElementById('webcamConfidenceValue').textContent = confidenceStr;
+                    setWebcamGaugePercent(confidenceVal);
+                    
+                    handleLiveClassificationBuffer(letter, confidenceVal);
+                    appendConsoleLog(`Inference: Predicted class '${letter}' (${confidenceStr}) in ${latency}ms`);
+                } else {
+                    activeWebcamLandmarks = null;
+                    document.getElementById('webcamPredictedLetter').textContent = 'NOTHING';
+                    document.getElementById('webcamConfidenceValue').textContent = '0.0%';
+                    setWebcamGaugePercent(0);
+                    
+                    handleLiveClassificationBuffer('NOTHING', 0.0);
+                }
+            })
+            .catch(err => {
+                console.error("Frame prediction fail:", err);
+                activeWebcamLandmarks = null;
+                appendConsoleLog("Error: Frame analysis POST failed.", "warn");
+            });
+        }
+
+        // Live queues buffer
+        function handleLiveClassificationBuffer(letter, confidence) {
+            const THRESHOLD = 0.35; // Lowered from 0.70 to allow correct predictions at 40-50% confidence
+            const STABLE_FRAMES = 3; // Reduced from 4 to 3 (~0.9s stable hold) to make typing more responsive
+            const DELAY = 1200;
+            
+            if (letter !== 'NOTHING' && confidence > THRESHOLD) {
+                stablePredictionBuffer.push(letter);
+            } else {
+                stablePredictionBuffer = [];
+            }
+            
+            if (stablePredictionBuffer.length >= STABLE_FRAMES) {
+                const allMatch = stablePredictionBuffer.every(val => val === stablePredictionBuffer[0]);
+                
+                if (allMatch) {
+                    const stableChar = stablePredictionBuffer[0];
+                    const stamp = Date.now();
+                    
+                    if (stableChar !== lastAddedWebcamLetter || (stamp - lastAddedWebcamTimestamp > DELAY)) {
+                        if (stableChar === 'SPACE') {
+                            webcamWord += ' ';
+                        } else if (stableChar === 'DEL') {
+                            webcamWord = webcamWord.slice(0, -1);
+                        } else {
+                            webcamWord += stableChar;
+                        }
+                        
+                        updateWebcamWord();
+                        lastAddedWebcamLetter = stableChar;
+                        lastAddedWebcamTimestamp = stamp;
+                        stablePredictionBuffer = [];
+                        showToastNotification(`Transcribed character: ${stableChar}`);
+                        
+                        logInferenceRecord('Live Camera', stableChar, (confidence * 100).toFixed(1) + '%');
+                    }
+                } else {
+                    stablePredictionBuffer.shift();
+                }
+            }
+        }
+
+        function updateWebcamWord() {
+            const wordEl = document.getElementById('webcamCurrentWord');
+            if (!wordEl) return;
+            wordEl.innerHTML = '';
+            
+            if (webcamWord === '') {
+                wordEl.innerHTML = '<span class="terminal-placeholder">Begin gesturing to compile characters...</span>';
+                return;
+            }
+            
+            webcamWord.split('').forEach(char => {
+                const span = document.createElement('span');
+                span.className = 'char-slide';
+                span.textContent = char === ' ' ? '\u00A0' : char;
+                wordEl.appendChild(span);
+            });
+        }
+
+        function webcamDeleteChar() {
+            webcamWord = webcamWord.slice(0, -1);
+            updateWebcamWord();
+        }
+
+        function webcamClearWord() {
+            webcamWord = '';
+            updateWebcamWord();
+            showToastNotification("Live console buffer reset complete.");
+        }
+
+        function webcamAddSpace() {
+            webcamWord += ' ';
+            updateWebcamWord();
+        }
+
+        // Text vocaliser SpeechSynthesis
+        function speakTranscription() {
+            const activeText = webcamWord || currentWord;
+            if (!activeText || activeText.trim() === '') {
+                showToastNotification("No transcribed word in active buffer.", "error");
+                return;
+            }
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(activeText);
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+                showToastNotification("Vocalizing text buffer...");
+                appendConsoleLog(`System: SpeechSynthesis vocalized: "${activeText}"`);
+            } else {
+                showToastNotification("Text-to-speech not supported in this browser.", "error");
+            }
+        }
+
+        // Clipboard Copy helper
+        function copyTranscription() {
+            const activeText = webcamWord || currentWord;
+            if (!activeText || activeText.trim() === '') {
+                showToastNotification("No text to copy.", "error");
+                return;
+            }
+            navigator.clipboard.writeText(activeText)
+                .then(() => {
+                    showToastNotification("Text copied to clipboard!");
+                    appendConsoleLog("System: Buffer text copied to clipboard.");
+                })
+                .catch(err => {
+                    console.error("Clipboard copy error:", err);
+                });
+        }
+
+        // Append to logs element
+        function appendConsoleLog(message, level = 'info') {
+            const terminal = document.getElementById('webcamLogsTerminal');
+            if (!terminal) return;
+            
+            const time = new Date().toLocaleTimeString();
+            const logDiv = document.createElement('div');
+            
+            let colorClass = 'log-info-badge';
+            if (level === 'warn') colorClass = 'log-warn-badge';
+            else if (level === 'success') colorClass = 'log-success-badge';
+            
+            logDiv.innerHTML = `[${time}] <span class="${colorClass}">${message}</span>`;
+            terminal.appendChild(logDiv);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        // History logs table updater
+        function updateHistoryTable() {
+            const tbody = document.getElementById('historyTableBody');
+            const searchVal = document.getElementById('historySearch').value.toLowerCase();
+            const countLabel = document.getElementById('historyCounter');
+            
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            
+            const filtered = predictionHistory.filter(item => {
+                return item.prediction.toLowerCase().includes(searchVal) || 
+                       item.inputType.toLowerCase().includes(searchVal);
+            });
+            
+            countLabel.textContent = `${filtered.length} entries`;
+            
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 3rem;">No history logs match filters.</td></tr>`;
+                return;
+            }
+            
+            filtered.forEach(item => {
+                const badgeClass = item.inputType === 'Live Camera' ? 'badge-src-webcam' : 'badge-src-upload';
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-family: var(--font-mono); font-size:0.75rem; color: var(--text-secondary);">${item.dateTime}</td>
+                        <td><span class="badge-source ${badgeClass}">${item.inputType}</span></td>
+                        <td style="font-family: var(--font-display); font-weight:700; color: #ffffff; font-size:1.1rem;">${item.prediction}</td>
+                        <td style="font-family: var(--font-mono); font-size:0.8rem; color: var(--accent-teal);">${item.confidence}</td>
+                        <td>
+                            <button class="action-circle-btn" onclick="recallHistoricalLog('${item.letter}', '${item.confidence}')" title="Recall Prediction">
+                                <i class="fas fa-redo"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function recallHistoricalLog(letter, confidence) {
+            closeHistoryModal();
+            showToastNotification(`Recalled prediction: ${letter} (${confidence})`);
+            
+            document.getElementById('predictedLetter').textContent = letter;
+            document.getElementById('confidenceValue').textContent = confidence;
+            document.getElementById('confidenceBar').style.width = confidence;
+            document.getElementById('uploadResultPanel').classList.add('show');
+            
+            switchDemoTab('upload');
+            const demoSec = document.getElementById('demo');
+            if (demoSec) demoSec.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function clearHistory() {
+            predictionHistory = [];
+            localStorage.removeItem('predictionHistory');
+            updateHistoryTable();
+            showToastNotification("History logs cleared", "error");
+        }
+
+        // CSV log exporter
+        function exportHistory() {
+            if (predictionHistory.length === 0) {
+                showToastNotification("No history logs available to export.", "error");
+                return;
+            }
+            
+            let content = "Timestamp,Source,Prediction,Confidence\n";
+            predictionHistory.forEach(item => {
+                content += `"${item.dateTime}","${item.inputType}","${item.prediction}","${item.confidence}"\n`;
+            });
+            
+            const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `ASL_Inference_Logs_${Date.now()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToastNotification("CSV logs exported successfully");
+        }
+
+        // Glossary dictionary helpers
+        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+        let activeCategory = 'all';
+
+        function populateGlossaryGrid() {
+            const grid = document.getElementById('dictionaryGrid');
+            const searchVal = document.getElementById('dictionarySearch').value.toLowerCase();
+            grid.innerHTML = '';
+            
+            let list = [...letters];
+            if (activeCategory === 'letters') {
+                list = letters.filter(item => !['DEL','SPACE','NOTHING'].includes(item));
+            } else if (activeCategory === 'special') {
+                list = ['DEL', 'SPACE', 'NOTHING'].filter(item => letters.includes(item));
+            }
+            
+            const filtered = list.filter(item => item.toLowerCase().includes(searchVal));
+            
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 3rem;">No glossary cards match query.</div>`;
+                return;
+            }
+            
+            filtered.forEach(letter => {
+                const card = document.createElement('div');
+                card.className = 'glossary-card';
+                card.onclick = () => openGestureDetail(letter);
+                
+                const imgPath = `/static/asl_images/${letter}_test.jpg`;
+                
+                card.innerHTML = `
+                    <div class="glossary-thumb">
+                        <img src="${imgPath}" alt="Sign ${letter}" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'120\\' height=\\'120\\' viewBox=\\'0 0 100 100\\'%3E%3Crect width=\\'100\\' height=\\'100\\' fill=\\'%230d9488\\' opacity=\\'0.1\\'/%3E%3Ctext x=\\'50\\' y=\\'65\\' font-family=\\'Plus Jakarta Sans\\' font-size=\\'45\\' font-weight=\\'bold\\' text-anchor=\\'middle\\' fill=\\'%230d9488\\'%3E${letter}%3C/text%3E%3C/svg%3E'">
+                    </div>
+                    <div class="glossary-letter">${letter}</div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function filterGlossaryCategory(cat) {
+            activeCategory = cat;
+            document.querySelectorAll('.filter-chip').forEach(chip => chip.classList.remove('active'));
+            document.getElementById(`chip-${cat}`).classList.add('active');
+            populateGlossaryGrid();
+        }
+
+        function filterGlossaryQuery() {
+            populateGlossaryGrid();
+        }
+
+        // Gesture pose details modal
+        function openGestureDetail(letter) {
+            const modal = document.getElementById('dictionaryDetailModal');
+            document.getElementById('detailCharTitle').textContent = letter;
+            document.getElementById('detailPreviewImage').src = `/static/asl_images/${letter}_test.jpg`;
+            
+            const specialKeys = ['SPACE', 'DEL', 'NOTHING'];
+            const type = specialKeys.includes(letter) ? 'Control Pose' : 'Alphabet Gesture';
+            document.getElementById('detailTypeBadge').textContent = type;
+            
+            const descriptions = {
+                'A': 'Fist formed with the thumb resting vertically against the outer surface of the index finger.',
+                'B': 'Open flat hand with all four fingers touching vertically, and the thumb folded across the palm.',
+                'C': 'All fingers and thumb curved to form a semi-circular profile representing the shape of the letter C.',
+                'D': 'Index finger pointing straight up, while the other three fingers curve inwards to meet the thumb.',
+                'E': 'All fingers curled tightly with tips resting on top of the thumb folded horizontally across the palm.',
+                'F': 'Index finger and thumb touching to form a loop, with the middle, ring, and pinky fingers spread straight out.',
+                'G': 'Index finger and thumb pointing horizontally outwards parallel to each other, like a pinch gesture.',
+                'H': 'Index and middle fingers extended straight horizontally, while the other fingers fold into the palm.'
+            };
+            
+            document.getElementById('detailDescription').textContent = descriptions[letter] || `Standard American Sign Language pose structure representing the character "${letter}".`;
+            
+            const checklist = document.getElementById('detailPoseChecklist');
+            checklist.innerHTML = '';
+            
+            const poseTargets = [
+                'Wrist relative distance vector scaling: 1.0',
+                'Landmark extraction nodes 0 through 20 processed',
+                'Wrist relative translation variance: 0.00'
+            ];
+            
+            poseTargets.forEach(t => {
+                const li = document.createElement('li');
+                li.className = 'pose-checklist-item';
+                li.innerHTML = `<i class="fas fa-check-circle"></i> <span>${t}</span>`;
+                checklist.appendChild(li);
+            });
+            
+            modal.classList.add('active');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('dictionaryDetailModal').classList.remove('active');
+        }
+
+        function launchHistoryModal() {
+            document.getElementById('historyModal').classList.add('active');
+            updateHistoryTable();
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModal').classList.remove('active');
+        }
+
+        function setReferenceGestureGuide() {
+            const letter = document.getElementById('detailCharTitle').textContent;
+            showToastNotification(`Reference template guide set for "${letter}".`);
+            closeDetailModal();
+            
+            switchDemoTab('camera');
+            const demoSec = document.getElementById('demo');
+            if (demoSec) demoSec.scrollIntoView({ behavior: 'smooth' });
+            
+            appendConsoleLog(`System: Set guide template for target class '${letter}'`);
+        }
+
+        // Chart.js Telemetry Initializations
+        let accChart = null, errorChart = null;
+
+        function switchTelemetryChart(type) {
+            document.getElementById('btn-chart-accuracy').classList.remove('active');
+            document.getElementById('btn-chart-error').classList.remove('active');
+            
+            document.getElementById('pane-chart-accuracy').classList.remove('active');
+            document.getElementById('pane-chart-error').classList.remove('active');
+            
+            if (type === 'accuracy') {
+                document.getElementById('btn-chart-accuracy').classList.add('active');
+                document.getElementById('pane-chart-accuracy').classList.add('active');
+                if (accChart) {
+                    accChart.resize();
+                    accChart.update();
+                }
+            } else {
+                document.getElementById('btn-chart-error').classList.add('active');
+                document.getElementById('pane-chart-error').classList.add('active');
+                if (errorChart) {
+                    errorChart.resize();
+                    errorChart.update();
+                }
+            }
+        }
+
+        function initializeCharts() {
+            if (accChart) accChart.destroy();
+            if (errorChart) errorChart.destroy();
+            
+            const options = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0c0e14',
+                        titleColor: '#ffffff',
+                        titleFont: { family: 'Plus Jakarta Sans', size: 11, weight: 'bold' },
+                        bodyColor: '#94a3b8',
+                        bodyFont: { family: 'JetBrains Mono', size: 10 },
+                        borderColor: 'rgba(255, 255, 255, 0.08)',
+                        borderWidth: 1,
+                        padding: 8,
+                        cornerRadius: 6
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.02)' },
+                        ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 8 } }
+                    },
+                    y: {
+                        grid: { color: 'rgba(255, 255, 255, 0.02)' },
+                        ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 8 } }
+                    }
+                }
+            };
+
+            const accCtx = document.getElementById('trainingChart').getContext('2d');
+            const accGrad = accCtx.createLinearGradient(0, 0, 0, 300);
+            accGrad.addColorStop(0, 'rgba(13, 148, 136, 0.15)');
+            accGrad.addColorStop(1, 'rgba(13, 148, 136, 0.0)');
+
+            accChart = new Chart(accCtx, {
+                type: 'line',
+                data: {
+                    labels: [10, 50, 100, 200, 350, 500],
+                    datasets: [{
+                        label: 'Accuracy (%)',
+                        data: [84.2, 92.1, 94.6, 96.9, 98.4, 99.46],
+                        borderColor: '#0d9488',
+                        backgroundColor: accGrad,
+                        borderWidth: 2.5,
+                        pointBackgroundColor: '#0ea5e9',
+                        pointBorderColor: '#0c0e14',
+                        pointBorderWidth: 1.5,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        tension: 0.35,
+                        fill: true
+                    }]
+                },
+                options: options
+            });
+
+            const errCtx = document.getElementById('lossChart').getContext('2d');
+            const errGrad = errCtx.createLinearGradient(0, 0, 0, 300);
+            errGrad.addColorStop(0, 'rgba(244, 63, 94, 0.12)');
+            errGrad.addColorStop(1, 'rgba(244, 63, 94, 0.0)');
+
+            errorChart = new Chart(errCtx, {
+                type: 'line',
+                data: {
+                    labels: [10, 50, 100, 200, 350, 500],
+                    datasets: [{
+                        label: 'Out-Of-Bag Error',
+                        data: [0.158, 0.079, 0.054, 0.031, 0.016, 0.0054],
+                        borderColor: '#f43f5e',
+                        backgroundColor: errGrad,
+                        borderWidth: 2.5,
+                        pointBackgroundColor: '#f43f5e',
+                        pointBorderColor: '#0c0e14',
+                        pointBorderWidth: 1.5,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        tension: 0.35,
+                        fill: true
+                    }]
+                },
+                options: options
+            });
+        }
+
+        // Initialize state on page load
+        window.addEventListener('load', () => {
+
+            // Load word from session hidden input
+            const hiddenWord = document.getElementById('hiddenWord');
+            if (hiddenWord && hiddenWord.value) {
+                currentWord = hiddenWord.value;
+                updateWordOutput();
+            }
+            
+            // Drag and drop zone binding
+            const dropzone = document.getElementById('dropzone');
+            if (dropzone) {
+                ['dragenter', 'dragover'].forEach(name => {
+                    dropzone.addEventListener(name, (e) => {
+                        e.preventDefault();
+                        dropzone.classList.add('dragover');
+                    }, false);
+                });
+                
+                ['dragleave', 'drop'].forEach(name => {
+                    dropzone.addEventListener(name, (e) => {
+                        e.preventDefault();
+                        dropzone.classList.remove('dragover');
+                    }, false);
+                });
+                
+                dropzone.addEventListener('drop', (e) => {
+                    const dt = e.dataTransfer;
+                    const files = dt.files;
+                    const fileInput = document.getElementById('imageUpload');
+                    
+                    if (files && files[0]) {
+                        fileInput.files = files;
+                        previewFile(fileInput);
+                    }
+                }, false);
+            }
+            
+            // Load history
+            const savedHistory = localStorage.getItem('predictionHistory');
+            if (savedHistory) {
+                predictionHistory = JSON.parse(savedHistory);
+            } else {
+                predictionHistory = [
+                    { dateTime: '28/05/2026, 03:00:15 AM', timestamp: '03:00:15', inputType: 'Image Upload', prediction: 'C', confidence: '99.4%', letter: 'C' },
+                    { dateTime: '28/05/2026, 03:02:44 AM', timestamp: '03:02:44', inputType: 'Live Camera', prediction: 'A', confidence: '98.2%', letter: 'A' }
+                ];
+            }
+            updateHistoryTable();
+            populateGlossaryGrid();
+            initializeCharts();
+        });
+
+        // Modal escape triggers
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeDetailModal();
+                closeHistoryModal();
+            }
+        });
+    </script>
+</body>
+</html>

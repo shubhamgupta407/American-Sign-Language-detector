@@ -1,0 +1,7 @@
+Flask
+gunicorn
+opencv-python-headless
+mediapipe
+joblib
+Pillow
+scikit-learn
