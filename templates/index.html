@@ -2885,6 +2885,17 @@
                     video: { width: 640, height: 480, facingMode: 'user' }
                 });
                 webcamElement.srcObject = webcamStream;
+                
+                // Explicitly play the video element to satisfy strict autoplay policies on public domains
+                try {
+                    await webcamElement.play();
+                } catch (playErr) {
+                    console.warn("webcamElement.play() failed, retrying after loadedmetadata:", playErr);
+                    webcamElement.addEventListener('loadedmetadata', () => {
+                        webcamElement.play().catch(e => console.error("webcamElement.play() deferred fail:", e));
+                    }, { once: true });
+                }
+                
                 cameraOverlay.style.display = 'none';
                 document.getElementById('activeCameraControls').style.display = 'block';
                 
